@@ -37,8 +37,13 @@ CURRENT_VERSION = "1.0.0"
 
 def check_for_updates(self):
     try:
-        version_url = "https://ooottypjctuuqzwkuqvo.supabase.co/storage/v1/object/public/app-updates/version.json"
+        # ใช้ Supabase SDK ในการสร้าง Public URL ของไฟล์ version.json อย่างถูกต้อง
+        res = supabase.storage.from_("app-updates").get_public_url("version.json")
+        version_url = res if isinstance(res, str) else res.get("publicUrl")
         
+        if not version_url:
+            return
+
         response = requests.get(version_url, timeout=5)
         if response.status_code == 200:
             data = response.json()
