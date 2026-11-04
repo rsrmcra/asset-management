@@ -35,11 +35,11 @@ def resource_path(relative_path):
 
 CURRENT_VERSION = "1.0.1" 
 
-def check_for_updates(self):
+def check_for_updates(main_app=None):
     try:
         res = supabase.storage.from_("app-updates").get_public_url("version.json")
         version_url = res if isinstance(res, str) else res.get("publicUrl")
-
+        
         if not version_url:
             return
 
@@ -53,14 +53,25 @@ def check_for_updates(self):
 
             if latest_version and latest_version != CURRENT_VERSION:
                 msg = f"ตรวจพบเวอร์ชันใหม่ ({latest_version})\n\nรายละเอียด: {notes}\n\nระบบจำเป็นต้องอัปเดตเป็นเวอร์ชันล่าสุดเพื่อความถูกต้องของข้อมูล"
-
+                
                 if force_update:
                     messagebox.showwarning("แจ้งเตือนบังคับอัปเดต", msg)
                     webbrowser.open(download_url)
+                    if main_app:
+                        try:
+                            main_app.destroy()
+                        except Exception:
+                            pass
                     sys.exit(0)
                 else:
                     if messagebox.askyesno("แจ้งเตือนอัปเดตเวอร์ชัน", msg):
                         webbrowser.open(download_url)
+                        if main_app:
+                            try:
+                                main_app.destroy()
+                            except Exception:
+                                pass
+                        sys.exit(0)
     except Exception as e:
         print(f"ไม่สามารถตรวจสอบอัปเดตได้: {e}")
 
@@ -658,7 +669,7 @@ class MainDashboard(ctk.CTk):
         self.create_layout()
         self.show_dashboard()
 
-        # 📌 เพิ่มคำสั่งให้ตรวจสอบเวอร์ชันหลังเปิดโปรแกรม 2 วินาที
+        # 📌 ตรวจสอบเวอร์ชันหลังเปิดโปรแกรม 2 วินาที
         self.after(2000, lambda: check_for_updates(self))
 
     def create_layout(self):

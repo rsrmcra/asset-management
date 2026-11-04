@@ -22,11 +22,11 @@ jobs:
           
       - name: Build with PyInstaller
         run: |
-          python -m PyInstaller --noconsole --clean --noconfirm --collect-all cryptography --add-data "icons;icons" -n "RSRM Asset (1.0.1)" gui.py
+          python -m PyInstaller --noconsole --clean --noconfirm --collect-all cryptography --add-data "icons;icons" -n "RSRM-Asset-1.0.1" gui.py
           
       - name: Compress to ZIP
         run: |
-          Compress-Archive -Path "dist/RSRM Asset (1.0.1)/*" -DestinationPath CRA-Asset-System.zip
+          Compress-Archive -Path "dist/RSRM-Asset-1.0.1/*" -DestinationPath RSRM-Asset-1.0.1.zip
 
       - name: Upload to Supabase Storage
         env:
@@ -40,8 +40,7 @@ jobs:
           key = os.environ.get('SUPABASE_KEY')
           supabase = create_client(url, key)
           
-          # อัปโหลดไฟล์ .zip
-          with open('CRA-Asset-System.zip', 'rb') as f:
-              supabase.storage.from_('app-updates').upload('CRA-Asset-System.zip', f, file_options={'upsert': 'true'})
+          with open('RSRM-Asset-1.0.1.zip', 'rb') as f:
+              supabase.storage.from_('app-updates').upload('RSRM-Asset-1.0.1.zip', f, file_options={'upsert': 'true'})
           print('ZIP uploaded successfully.')
           "
