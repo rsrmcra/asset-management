@@ -22,7 +22,7 @@ jobs:
           
       - name: Build with PyInstaller
         run: |
-          python -m PyInstaller --noconsole --clean --noconfirm --add-data "icons;icons" gui.py
+          python -m PyInstaller --noconsole --clean --noconfirm --collect-all cryptography --add-data "icons;icons" gui.py
           
       - name: Compress to ZIP
         run: |
