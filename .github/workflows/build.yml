@@ -1,0 +1,28 @@
+name: Auto Build and Update
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.15'
+          
+      - name: Install dependencies
+        run: |
+          pip install requests customtkinter pillow pyinstaller supabase
+          
+      - name: Build with PyInstaller
+        run: |
+          python -m PyInstaller --noconsole --add-data "icons;icons" gui.py
+          
+      - name: Compress to ZIP
+        run: |
+          Compress-Archive -Path dist/gui/* -DestinationPath CRA-Asset-System.zip
