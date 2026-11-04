@@ -33,14 +33,13 @@ def resource_path(relative_path):
 # 1. กำหนดเลขเวอร์ชันปัจจุบันของโปรแกรมที่คุณกำลังใช้งานอยู่
 # =========================================================
 
-CURRENT_VERSION = "1.0.0" 
+CURRENT_VERSION = "1.0.1" 
 
 def check_for_updates(self):
     try:
-        # ใช้ Supabase SDK ในการสร้าง Public URL ของไฟล์ version.json อย่างถูกต้อง
         res = supabase.storage.from_("app-updates").get_public_url("version.json")
         version_url = res if isinstance(res, str) else res.get("publicUrl")
-        
+
         if not version_url:
             return
 
@@ -50,11 +49,18 @@ def check_for_updates(self):
             latest_version = data.get("version")
             download_url = data.get("download_url")
             notes = data.get("release_notes", "")
+            force_update = data.get("force_update", False)
 
             if latest_version and latest_version != CURRENT_VERSION:
-                msg = f"พบเวอร์ชันใหม่ ({latest_version})!\n\nรายละเอียด: {notes}\n\nต้องการเปิดหน้าดาวน์โหลดอัปเดตเลยหรือไม่?"
-                if messagebox.askyesno("แจ้งเตือนอัปเดตเวอร์ชัน", msg, parent=self):
+                msg = f"ตรวจพบเวอร์ชันใหม่ ({latest_version})\n\nรายละเอียด: {notes}\n\nระบบจำเป็นต้องอัปเดตเป็นเวอร์ชันล่าสุดเพื่อความถูกต้องของข้อมูล"
+
+                if force_update:
+                    messagebox.showwarning("แจ้งเตือนบังคับอัปเดต", msg)
                     webbrowser.open(download_url)
+                    sys.exit(0)
+                else:
+                    if messagebox.askyesno("แจ้งเตือนอัปเดตเวอร์ชัน", msg):
+                        webbrowser.open(download_url)
     except Exception as e:
         print(f"ไม่สามารถตรวจสอบอัปเดตได้: {e}")
 
@@ -410,7 +416,7 @@ class LoginWindow(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        self.title("CRA Asset Management")
+        self.title(f"RSRM Asset ({CURRENT_VERSION}) - เข้าสู่ระบบ")
         self.configure(fg_color=BG)
         self.resizable(False, False)
 
@@ -643,7 +649,7 @@ class MainDashboard(ctk.CTk):
         self._dashboard_token = None
         self.menu_items = {}
 
-        self.title("CRA Asset Management System")
+        self.title(f"RSRM Asset ({CURRENT_VERSION}) - ระบบบริหารจัดการครุภัณฑ์")
         self.configure(fg_color=BG)
         self.minsize(1100, 700)
 
