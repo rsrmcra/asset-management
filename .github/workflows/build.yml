@@ -26,7 +26,7 @@ jobs:
           
       - name: Compress to ZIP
         run: |
-          Compress-Archive -Path dist/gui/* -DestinationPath CRA-Asset-System.zip
+          Compress-Archive -Path "dist/RSRM Asset (1.0.1)/*" -DestinationPath CRA-Asset-System.zip
 
       - name: Upload to Supabase Storage
         env:
