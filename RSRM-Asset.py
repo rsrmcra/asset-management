@@ -713,6 +713,7 @@ ICONS = {
     "transfer": ctk.CTkImage(Image.open(resource_path("icons/transfer.png")), size=(18, 18)),
     "history": ctk.CTkImage(Image.open(resource_path("icons/history.png")), size=(18, 18)),
     "edit": ctk.CTkImage(Image.open(resource_path("icons/edit.png")), size=(16, 16)),
+    "historytransfer": ctk.CTkImage(Image.open(resource_path("icons/historytransfer.png")), size=(18, 18)),
 }
 
 
@@ -864,7 +865,7 @@ class MainDashboard(ctk.CTk):
         self.menu_button("dashboard", "    Dashboard", ICONS["dashboard"], self.show_dashboard)
         self.menu_button("add", "    เพิ่มครุภัณฑ์", ICONS["add"], self.show_add_asset)
         self.menu_button("transfer", "    บันทึกโอนย้าย", ICONS["transfer"], self.show_transfer)
-        self.menu_button("transfer_history", "    ประวัติการโอนย้าย", ICONS["history"], self.show_transfer_history)
+        self.menu_button("transfer_history", "    ประวัติการโอนย้าย", ICONS["historytransfer"], self.show_transfer_history)
         self.menu_button("logs", "    ประวัติการทำรายการ", ICONS["history"], self.show_logs)
 
         ctk.CTkFrame(
