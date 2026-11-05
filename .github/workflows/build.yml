@@ -22,8 +22,8 @@ jobs:
           
       - name: Build with PyInstaller
         run: |
-          python -m PyInstaller --noconsole --clean --noconfirm --collect-all cryptography --add-data "icons;icons" -n "RSRM-Asset" RSRM-Asset.py
-          
+          python -m PyInstaller --onefile --noconsole --clean --noconfirm --collect-all cryptography --collect-all pydantic --add-data "icons;icons" -n "RSRM-Asset" RSRM-Asset.py
+                              
       - name: Upload to Supabase Storage
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
