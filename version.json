@@ -1,6 +1,6 @@
 {
   "version": "1.0.2",
-  "download_url": "https://<PROJECT_REF>.supabase.co/storage/v1/object/public/app-updates/RSRM-Asset.exe",
+  "download_url": "https://abcdefghijklmnop.supabase.co/storage/v1/object/public/app-updates/RSRM-Asset.exe",
   "release_notes": "ปรับปรุงระบบอัปเดตอัตโนมัติให้ดาวน์โหลดและติดตั้งผ่าน Progress Bar ได้สมบูรณ์",
   "force_update": false
 }
