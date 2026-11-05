@@ -8,6 +8,7 @@ import sys
 import os
 import requests
 import webbrowser
+import subprocess
 
 from database import (
     supabase,
@@ -52,28 +53,120 @@ def check_for_updates(main_app=None):
             force_update = data.get("force_update", False)
 
             if latest_version and latest_version != CURRENT_VERSION:
-                msg = f"ตรวจพบเวอร์ชันใหม่ ({latest_version})\n\nรายละเอียด: {notes}\n\nระบบจำเป็นต้องอัปเดตเป็นเวอร์ชันล่าสุดเพื่อความถูกต้องของข้อมูล"
+                msg = f"ตรวจพบเวอร์ชันใหม่ ({latest_version})\n\nรายละเอียด: {notes}\n\nต้องการอัปเดตเป็นเวอร์ชันล่าสุดเลยหรือไม่?"
                 
                 if force_update:
-                    messagebox.showwarning("แจ้งเตือนบังคับอัปเดต", msg)
-                    webbrowser.open(download_url)
-                    if main_app:
-                        try:
-                            main_app.destroy()
-                        except Exception:
-                            pass
-                    sys.exit(0)
+                    messagebox.showwarning("แจ้งเตือนบังคับอัปเดต", msg + "\n\n(ระบบจำเป็นต้องอัปเดตทันที)")
+                    start_download_and_update(download_url, main_app)
                 else:
                     if messagebox.askyesno("แจ้งเตือนอัปเดตเวอร์ชัน", msg):
-                        webbrowser.open(download_url)
-                        if main_app:
-                            try:
-                                main_app.destroy()
-                            except Exception:
-                                pass
-                        sys.exit(0)
+                        start_download_and_update(download_url, main_app)
     except Exception as e:
         print(f"ไม่สามารถตรวจสอบอัปเดตได้: {e}")
+
+def start_download_and_update(download_url, main_app):
+    """สร้างหน้าต่างแสดง Progress Bar และเริ่มดาวน์โหลดไฟล์ใน Background Thread"""
+    progress_win = ctk.CTkToplevel(main_app)
+    progress_win.title("กำลังอัปเดตโปรแกรม...")
+    progress_win.geometry("400x180")
+    progress_win.resizable(False, False)
+    progress_win.grab_set()  # ป้องกันไม่ให้ไปกดหน้าอื่นขณะอัปเดต
+    
+    # จัดหน้าต่างให้อยู่ตรงกลาง
+    center_window(progress_win, 400, 180)
+
+    ctk.CTkLabel(
+        progress_win, 
+        text="กำลังดาวน์โหลดเวอร์ชันล่าสุด...", 
+        font=(FONT, 13, "bold"),
+        text_color=NAVY
+    ).pack(pady=(25, 10))
+
+    progress_bar = ctk.CTkProgressBar(progress_win, width=320, progress_color=ORANGE)
+    progress_bar.pack(pady=10)
+    progress_bar.set(0)
+
+    status_label = ctk.CTkLabel(progress_win, text="0%", font=(FONT, 11), text_color=MUTED)
+    status_label.pack(pady=(0, 15))
+
+    def run_download():
+        try:
+            # ดาวน์โหลดไฟล์แบบ Stream เพื่อคำนวณเปอร์เซ็นต์
+            response = requests.get(download_url, stream=True, timeout=30)
+            total_size = int(response.headers.get('content-length', 0))
+            
+            temp_dir = os.environ.get("TEMP", ".")
+            new_exe_path = os.path.join(temp_dir, "RSRM_Asset_update.exe")
+            
+            downloaded = 0
+            with open(new_exe_path, "wb") as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
+                        downloaded += len(chunk)
+                        if total_size > 0:
+                            percent = downloaded / total_size
+                            progress_bar.set(percent)
+                            status_label.configure(text=f"{int(percent * 100)}%")
+
+            # ดาวน์โหลดเสร็จแล้ว เตรียมรัน Updater Script เพื่อสลับไฟล์
+            status_label.configure(text="กำลังเตรียมรีสตาร์ทระบบ...")
+            progress_win.after(1000, lambda: apply_update_and_restart(new_exe_path, main_app, progress_win))
+
+        except Exception as e:
+            messagebox.showerror("เกิดข้อผิดพลาด", f"ไม่สามารถดาวน์โหลดอัปเดตได้:\n{e}", parent=progress_win)
+            progress_win.destroy()
+
+    # ใช้ Thread เพื่อไม่ให้หน้าจอ UI ค้างตอนดาวน์โหลด
+    threading.Thread(target=run_download, daemon=True).start()
+
+
+def apply_update_and_restart(new_exe_path, main_app, progress_win):
+    """สร้างไฟล์ Batch (.bat) เพื่อสลับไฟล์ .exe ตัวเก่ากับตัวใหม่ แล้วเปิดโปรแกรมขึ้นมาใหม่"""
+    try:
+        # ตรวจสอบว่ารันแบบ .exe หรือแบบ Python Script ปกติ
+        if getattr(sys, 'frozen', False):
+            current_exe_path = sys.executable
+        else:
+            # ถ้ารันแบบสคริปต์ .py จะไม่สามารถแทนที่ไฟล์ตัวเองได้โดยตรง
+            messagebox.showinfo("โหมดพัฒนา", "ระบบอัปเดตอัตโนมัติจะทำงานสมบูรณ์เมื่อแพ็กเกจเป็นไฟล์ .exe แล้วเท่านั้น", parent=progress_win)
+            progress_win.destroy()
+            return
+
+        batch_path = os.path.join(os.environ.get("TEMP", "."), "update_cra.bat")
+        
+        # เขียนคำสั่ง Batch: รอ 2 วินาที -> ลบไฟล์เก่า -> ย้ายไฟล์ใหม่มาทับ -> เปิดโปรแกรมใหม่ -> ลบไฟล์ bat ทิ้ง
+        batch_content = f"""
+@echo off
+timeout /t 2 /nobreak >nul
+del "{current_exe_path}"
+move /y "{new_exe_path}" "{current_exe_path}"
+start "" "{current_exe_path}"
+del "%~f0"
+"""
+        
+        with open(batch_path, "w", encoding="utf-8") as f:
+            f.write(batch_content)
+            
+        # สั่งรันไฟล์ Batch
+        subprocess.Popen(batch_path, shell=True)
+
+        # ปิดโปรแกรมหลักทั้งหมด
+        if progress_win:
+            try:
+                progress_win.destroy()
+            except Exception:
+                pass
+        if main_app:
+            try:
+                main_app.destroy()
+            except Exception:
+                pass
+        sys.exit(0)
+
+    except Exception as e:
+        messagebox.showerror("เกิดข้อผิดพลาด", f"ไม่สามารถแทนที่ไฟล์อัปเดตได้:\n{e}", parent=progress_win)
+        progress_win.destroy()
 
 # =========================================================
 # CRA THEME

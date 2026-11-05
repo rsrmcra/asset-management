@@ -13,7 +13,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.15'
+          python-version: '3.11'
           
       - name: Install dependencies
         run: |
@@ -22,12 +22,8 @@ jobs:
           
       - name: Build with PyInstaller
         run: |
-          python -m PyInstaller --noconsole --clean --noconfirm --collect-all cryptography --add-data "icons;icons" -n "RSRM-Asset-1.0.1" RSRM-Asset.py
+          python -m PyInstaller --noconsole --clean --noconfirm --collect-all cryptography --add-data "icons;icons" -n "RSRM-Asset" RSRM-Asset.py
           
-      - name: Compress to ZIP
-        run: |
-          Compress-Archive -Path "dist/RSRM-Asset-1.0.1/*" -DestinationPath RSRM-Asset-1.0.1.zip
-
       - name: Upload to Supabase Storage
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -40,7 +36,8 @@ jobs:
           key = os.environ.get('SUPABASE_KEY')
           supabase = create_client(url, key)
           
-          with open('RSRM-Asset-1.0.1.zip', 'rb') as f:
-              supabase.storage.from_('app-updates').upload('RSRM-Asset-1.0.1.zip', f, file_options={'upsert': 'true'})
-          print('ZIP uploaded successfully.')
+          exe_path = 'dist/RSRM-Asset/RSRM-Asset.exe'
+          with open(exe_path, 'rb') as f:
+              supabase.storage.from_('app-updates').upload('RSRM-Asset.exe', f, file_options={'upsert': 'true'})
+          print('EXE uploaded successfully.')
           "
