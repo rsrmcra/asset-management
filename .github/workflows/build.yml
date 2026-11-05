@@ -20,7 +20,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests customtkinter pillow pyinstaller supabase
           
-      # 📌 เพิ่มขั้นตอนการอัปเดตเลขเวอร์ชันอัตโนมัติ (Auto-increment Patch) ตรงนี้
       - name: Auto-increment Version
         run: |
           python -c "
@@ -28,18 +27,16 @@ jobs:
           with open('version.json', 'r', encoding='utf-8') as f:
               data = json.load(f)
           
-          # แยกเลขเวอร์ชัน เช่น '1.0.2' -> major=1, minor=0, patch=2
           v_parts = data['version'].split('.')
           major, minor, patch = int(v_parts[0]), int(v_parts[1]), int(v_parts[2])
           
-          # บวกเลข Patch ขึ้นทีละ 1 (เช่น 1.0.2 -> 1.0.3)
           patch += 1
           data['version'] = f'{major}.{minor}.{patch}'
           data['release_notes'] = 'อัปเดตระบบอัตโนมัติผ่าน GitHub Actions'
           
           with open('version.json', 'w', encoding='utf-8') as f:
               json.dump(data, f, ensure_ascii=False, indent=2)
-          print(f'Updated version to: {data[\"version\"]}')
+          print('Updated version successfully.')
           "
 
       - name: Build with PyInstaller
