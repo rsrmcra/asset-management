@@ -9,6 +9,7 @@ import os
 import requests
 import webbrowser
 import subprocess
+import json
 
 from database import (
     supabase,
@@ -31,10 +32,20 @@ def resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 # =========================================================
-# 1. กำหนดเลขเวอร์ชันปัจจุบันของโปรแกรมที่คุณกำลังใช้งานอยู่
+# 1. กำหนดเลขเวอร์ชันปัจจุบันของโปรแกรมที่คุณกำลังใช้งานอยู่ (โหลดอัตโนมัติจาก version.json)
 # =========================================================
 
-CURRENT_VERSION = "1.0.1" 
+def get_current_version():
+    """อ่านเลขเวอร์ชันจากไฟล์ version.json หรือใช้ค่าสำรองถ้าไม่พบไฟล์"""
+    try:
+        path = resource_path("version.json")
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            return data.get("version", "1.0.1")
+    except Exception:
+        return "1.0.1"
+
+CURRENT_VERSION = get_current_version()
 
 def check_for_updates(main_app=None):
     try:
@@ -713,7 +724,7 @@ ICONS = {
     "transfer": ctk.CTkImage(Image.open(resource_path("icons/transfer.png")), size=(18, 18)),
     "history": ctk.CTkImage(Image.open(resource_path("icons/history.png")), size=(18, 18)),
     "edit": ctk.CTkImage(Image.open(resource_path("icons/edit.png")), size=(16, 16)),
-    "historytransfer": ctk.CTkImage(Image.open(resource_path("icons/historytransfer.png")), size=(18, 18)),
+    "historytransfer": ctk.CTkImage(Image.open(resource_path("icons/historytransfer.png")), size=(18, 18)), # ต้องมีบรรทัดนี้
 }
 
 
@@ -865,7 +876,7 @@ class MainDashboard(ctk.CTk):
         self.menu_button("dashboard", "    Dashboard", ICONS["dashboard"], self.show_dashboard)
         self.menu_button("add", "    เพิ่มครุภัณฑ์", ICONS["add"], self.show_add_asset)
         self.menu_button("transfer", "    บันทึกโอนย้าย", ICONS["transfer"], self.show_transfer)
-        self.menu_button("transfer_history", "    ประวัติการโอนย้าย", ICONS["historytransfer"], self.show_transfer_history)
+        self.menu_button("transfer_history", "    ประวัติการโอนย้าย", ICONS["historytransfer"], self.show_transfer_history) # <-- ตรวจสอบบรรทัดนี้
         self.menu_button("logs", "    ประวัติการทำรายการ", ICONS["history"], self.show_logs)
 
         ctk.CTkFrame(
